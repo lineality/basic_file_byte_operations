@@ -82,13 +82,18 @@ Using these steps we are not 'altering' any file per-se; we are constructing the
 # Test, Check, And Verify
 There can also be checking steps such as:
 - (double)checking original vs. new file: total byte length
-- (double)checking original vs. new file: pre-position byte length similarity (possible a hash-check)
-- (double)checking original vs. new file value: at-position, must be dissimilarity
+- (double)checking original vs. new file: pre-position byte length similarity (possible a hash-check) Note: if the orignal file is empty (zero bytes), or one single byte, or if the target-position is the first byte, then the length-similiarity distance for this step is zero.
+- (double)checking original vs. new file value: at-position: curious edge cases, this is a two part check. In each case 'new' value may be the same as the old. The first check to so compare the new value (different source for each operation) to see if it is the same as old. If not, it can be check for being different. (This step may be considered an extra-extra-check that not everyone would think they need.)
 - (double)checking original vs. new file: post-position, must be similarity given frame-shift or not (possible a hash-check)
  - - hex-edit in place: no frameshift: post-position must be the same
  - - remove byte: -1 frameshift in new file compared with original: given -1 frameshift post position must be the same
- - - add byte: +1 frameshift in new file compared with original: given +1 frameshift, post position must be the same
+ - - add byte: +1 from target position frameshift in new file compared with original file at target-position: given the +1 frameshift, post position data must be the same. Example of verification with +1 frame-shift after adding byte at position N:
+ ```
+ draft[N+1] == original[N] (first byte after insertion)
+ draft[N+2] == original[N+1] (second byte after insertion)
+ ```
 
+- For byte-addition only there could be an additional check: checking if the add position byte is the new byte (this is not a file comparison check).
 
 # Bucket Brigade
 

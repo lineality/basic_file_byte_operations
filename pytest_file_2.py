@@ -1,7 +1,7 @@
 # abc
 
 """
-Set row zero (aka "1") to:
+Set row zero (aka "1")to:
 ```
 # abc
 ```

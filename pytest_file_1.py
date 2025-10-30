@@ -1,10 +1,14 @@
 # abc
 
 """
-Set row zero (aka "1")
-to:
+Set row zero (aka "1") to:
 ```
-# abc
+# aaa
+```
+
+Run:
+```
+cargo run
 ```
 
 Result should be:

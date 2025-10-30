@@ -127,11 +127,13 @@ fn verify_byte_replacement_operation(
     expected_old_byte: u8,
     expected_new_byte: u8,
 ) -> io::Result<()> {
+    #[cfg(debug_assertions)]
     println!("\n=== Comprehensive Verification Phase ===");
 
     // =========================================
     // Step 1: Total Byte Length Check
     // =========================================
+    #[cfg(debug_assertions)]
     println!("1. Verifying total byte length...");
 
     let original_metadata = fs::metadata(original_path)?;
@@ -162,7 +164,7 @@ fn verify_byte_replacement_operation(
             ),
         ));
     }
-
+    // #[cfg(debug_assertions)]
     println!("   ✓ File sizes match: {} bytes", original_size);
 
     // Open both files for reading
@@ -172,9 +174,10 @@ fn verify_byte_replacement_operation(
     // =========================================
     // Step 2: Pre-Position Similarity Check
     // =========================================
+    #[cfg(debug_assertions)]
     println!(
         "2. Verifying pre-position bytes (0 to {})...",
-        byte_position - 1
+        byte_position.saturating_sub(1)
     );
 
     if byte_position > 0 {
@@ -238,18 +241,20 @@ fn verify_byte_replacement_operation(
                 ),
             ));
         }
-
+        #[cfg(debug_assertions)]
         println!(
             "   ✓ Pre-position bytes match (checksum: {:016X})",
             pre_position_original_checksum
         );
     } else {
+        #[cfg(debug_assertions)]
         println!("   ✓ No pre-position bytes to verify (position is 0)");
     }
 
     // =========================================
     // Step 3: At-Position Dissimilarity Check
     // =========================================
+    #[cfg(debug_assertions)]
     println!("3. Verifying at-position byte change...");
 
     let mut original_byte = [0u8; 1];
@@ -282,9 +287,10 @@ fn verify_byte_replacement_operation(
 
     // Verify they are different (dissimilarity check)
     if original_byte[0] == modified_byte[0] {
+        #[cfg(debug_assertions)]
         println!("   ⚠ Warning: Byte value unchanged (same value written)");
     }
-
+    #[cfg(debug_assertions)]
     println!(
         "   ✓ At-position byte successfully changed: 0x{:02X} -> 0x{:02X}",
         original_byte[0], modified_byte[0]
@@ -293,6 +299,7 @@ fn verify_byte_replacement_operation(
     // =========================================
     // Step 4: Post-Position Similarity Check
     // =========================================
+    // #[cfg(debug_assertions)]
     println!(
         "4. Verifying post-position bytes ({} to EOF)...",
         byte_position + 1
@@ -364,22 +371,30 @@ fn verify_byte_replacement_operation(
     }
 
     if post_bytes_verified > 0 {
+        #[cfg(debug_assertions)]
         println!(
             "   ✓ Post-position bytes match ({} bytes, checksum: {:016X})",
             post_bytes_verified, post_position_original_checksum
         );
     } else {
+        #[cfg(debug_assertions)]
         println!("   ✓ No post-position bytes (edit was at last byte)");
     }
 
     // =========================================
     // Final Verification Summary
     // =========================================
+    #[cfg(debug_assertions)]
     println!("\n=== Verification Summary ===");
+    #[cfg(debug_assertions)]
     println!("✓ Total byte length: VERIFIED ({} bytes)", original_size);
+    #[cfg(debug_assertions)]
     println!("✓ Pre-position similarity: VERIFIED");
+    #[cfg(debug_assertions)]
     println!("✓ At-position dissimilarity: VERIFIED");
+    #[cfg(debug_assertions)]
     println!("✓ Post-position similarity: VERIFIED (no frame-shift)");
+    #[cfg(debug_assertions)]
     println!("All verification checks PASSED\n");
 
     Ok(())
@@ -463,11 +478,15 @@ pub fn replace_single_byte_in_file(
     // =========================================
     // Input Validation Phase
     // =========================================
-
+    #[cfg(debug_assertions)]
     println!("=== In-Place Byte Replacement Operation ===");
+    #[cfg(debug_assertions)]
     println!("Target file: {}", original_file_path.display());
+    #[cfg(debug_assertions)]
     println!("Byte position: {}", byte_position_from_start);
+    #[cfg(debug_assertions)]
     println!("New byte value: 0x{:02X}", new_byte_value);
+    #[cfg(debug_assertions)]
     println!();
 
     // Verify file exists before any operations
@@ -539,26 +558,29 @@ pub fn replace_single_byte_in_file(
         draft_path.set_file_name(draft_name);
         draft_path
     };
-
+    #[cfg(debug_assertions)]
     println!("Backup path: {}", backup_file_path.display());
+    #[cfg(debug_assertions)]
     println!("Draft path: {}", draft_file_path.display());
+    #[cfg(debug_assertions)]
     println!();
 
     // =========================================
     // Backup Creation Phase
     // =========================================
-
+    #[cfg(debug_assertions)]
     println!("Creating backup copy...");
     fs::copy(&original_file_path, &backup_file_path).map_err(|e| {
         eprintln!("ERROR: Failed to create backup: {}", e);
         e
     })?;
+    #[cfg(debug_assertions)]
     println!("Backup created successfully");
 
     // =========================================
     // Draft File Construction Phase
     // =========================================
-
+    #[cfg(debug_assertions)]
     println!("Building modified draft file...");
 
     // Open original for reading
@@ -659,6 +681,7 @@ pub fn replace_single_byte_in_file(
 
         // EOF detection
         if bytes_read == 0 {
+            #[cfg(debug_assertions)]
             println!("Reached end of file");
             break;
         }
@@ -709,7 +732,7 @@ pub fn replace_single_byte_in_file(
             // Perform the byte replacement
             bucket_brigade_buffer[position_in_chunk] = new_byte_value;
             byte_was_replaced = true;
-
+            #[cfg(debug_assertions)]
             println!(
                 "Replaced byte at position {}: 0x{:02X} -> 0x{:02X}",
                 byte_position_from_start, original_byte_value, new_byte_value
@@ -754,7 +777,7 @@ pub fn replace_single_byte_in_file(
     // =========================================
     // Verification Phase
     // =========================================
-
+    #[cfg(debug_assertions)]
     println!("\nVerifying operation...");
 
     // Verify byte was actually replaced
@@ -840,18 +863,19 @@ pub fn replace_single_byte_in_file(
             "File size verification failed",
         ));
     }
-
+    #[cfg(debug_assertions)]
     println!("File size verified: {} bytes", draft_size);
 
     // =========================================
     // Atomic Replacement Phase
     // =========================================
-
+    #[cfg(debug_assertions)]
     println!("\nReplacing original file with modified version...");
 
     // Attempt atomic rename (most filesystems support this)
     match fs::rename(&draft_file_path, &original_file_path) {
         Ok(()) => {
+            #[cfg(debug_assertions)]
             println!("Original file successfully replaced");
         }
         Err(e) => {
@@ -865,12 +889,15 @@ pub fn replace_single_byte_in_file(
     // =========================================
     // Cleanup Phase
     // =========================================
-
+    #[cfg(debug_assertions)]
     println!("\nCleaning up backup file...");
 
     // Only remove backup after successful replacement
     match fs::remove_file(&backup_file_path) {
-        Ok(()) => println!("Backup file removed"),
+        Ok(()) => {
+            #[cfg(debug_assertions)]
+            println!("Backup file removed")
+        }
         Err(e) => {
             // Non-fatal: backup removal failure is not critical
             eprintln!(
@@ -878,6 +905,7 @@ pub fn replace_single_byte_in_file(
                 backup_file_path.display(),
                 e
             );
+            #[cfg(debug_assertions)]
             println!("Backup file retained at: {}", backup_file_path.display());
         }
     }
@@ -885,13 +913,19 @@ pub fn replace_single_byte_in_file(
     // =========================================
     // Operation Summary
     // =========================================
-
+    #[cfg(debug_assertions)]
     println!("\n=== Operation Complete ===");
+    #[cfg(debug_assertions)]
     println!("File: {}", original_file_path.display());
+    #[cfg(debug_assertions)]
     println!("Modified position: {}", byte_position_from_start);
+    #[cfg(debug_assertions)]
     println!("New byte value: 0x{:02X}", new_byte_value);
+    #[cfg(debug_assertions)]
     println!("Total bytes processed: {}", total_bytes_processed);
+    #[cfg(debug_assertions)]
     println!("Total chunks: {}", chunk_number);
+    #[cfg(debug_assertions)]
     println!("Status: SUCCESS");
 
     Ok(())
@@ -1001,11 +1035,13 @@ fn verify_byte_removal_operation(
     byte_position: usize,
     removed_byte_value: u8,
 ) -> io::Result<()> {
+    #[cfg(debug_assertions)]
     println!("\n=== Comprehensive Verification Phase ===");
 
     // =========================================
     // Step 1: Total Byte Length Check
     // =========================================
+    #[cfg(debug_assertions)]
     println!("1. Verifying total byte length...");
 
     let original_metadata = fs::metadata(original_path)?;
@@ -1039,6 +1075,7 @@ fn verify_byte_removal_operation(
         ));
     }
 
+    #[cfg(debug_assertions)]
     println!(
         "   ✓ File sizes correct: original={} bytes, draft={} bytes (removed 1 byte)",
         original_size, draft_size
@@ -1051,6 +1088,7 @@ fn verify_byte_removal_operation(
     // =========================================
     // Step 2: Pre-Position Similarity Check
     // =========================================
+    #[cfg(debug_assertions)]
     println!(
         "2. Verifying pre-position bytes (0 to {})...",
         byte_position.saturating_sub(1)
@@ -1116,17 +1154,20 @@ fn verify_byte_removal_operation(
             ));
         }
 
+        #[cfg(debug_assertions)]
         println!(
             "   ✓ Pre-position bytes match (checksum: {:016X})",
             pre_position_original_checksum
         );
     } else {
+        #[cfg(debug_assertions)]
         println!("   ✓ No pre-position bytes to verify (position is 0)");
     }
 
     // =========================================
     // Step 3: At-Position Dissimilarity Check
     // =========================================
+    #[cfg(debug_assertions)]
     println!("3. Verifying byte removal at position {}...", byte_position);
 
     // Read the byte that was removed from original
@@ -1177,6 +1218,7 @@ fn verify_byte_removal_operation(
             ));
         }
 
+        #[cfg(debug_assertions)]
         println!(
             "   ✓ Byte removed: 0x{:02X} (position {} now contains 0x{:02X} from position {})",
             original_removed_byte[0],
@@ -1185,6 +1227,7 @@ fn verify_byte_removal_operation(
             byte_position + 1
         );
     } else {
+        #[cfg(debug_assertions)]
         println!(
             "   ✓ Byte removed: 0x{:02X} (was last byte in file)",
             original_removed_byte[0]
@@ -1194,6 +1237,7 @@ fn verify_byte_removal_operation(
     // =========================================
     // Step 4: Post-Position Similarity Check with -1 Frame-Shift
     // =========================================
+    #[cfg(debug_assertions)]
     println!("4. Verifying post-position bytes with -1 frame-shift...");
 
     const POST_VERIFICATION_BUFFER_SIZE: usize = 64;
@@ -1267,25 +1311,33 @@ fn verify_byte_removal_operation(
     }
 
     if post_bytes_verified > 0 {
+        #[cfg(debug_assertions)]
         println!(
             "   ✓ Post-position bytes match with -1 frame-shift ({} bytes, checksum: {:016X})",
             post_bytes_verified, post_position_original_checksum
         );
     } else {
+        #[cfg(debug_assertions)]
         println!("   ✓ No post-position bytes (removal was at last byte)");
     }
 
     // =========================================
     // Final Verification Summary
     // =========================================
+    #[cfg(debug_assertions)]
     println!("\n=== Verification Summary ===");
+    #[cfg(debug_assertions)]
     println!(
         "✓ Total byte length: VERIFIED (original={}, draft={}, -1 byte)",
         original_size, draft_size
     );
+    #[cfg(debug_assertions)]
     println!("✓ Pre-position similarity: VERIFIED");
+    #[cfg(debug_assertions)]
     println!("✓ At-position dissimilarity: VERIFIED (byte removed)");
+    #[cfg(debug_assertions)]
     println!("✓ Post-position similarity: VERIFIED (with -1 frame-shift)");
+    #[cfg(debug_assertions)]
     println!("All verification checks PASSED\n");
 
     Ok(())
@@ -1389,10 +1441,13 @@ pub fn remove_single_byte_from_file(
     // =========================================
     // Input Validation Phase
     // =========================================
-
+    #[cfg(debug_assertions)]
     println!("=== Byte Removal Operation ===");
+    #[cfg(debug_assertions)]
     println!("Target file: {}", original_file_path.display());
+    #[cfg(debug_assertions)]
     println!("Byte position to remove: {}", byte_position_from_start);
+    #[cfg(debug_assertions)]
     println!();
 
     // Verify file exists before any operations
@@ -1464,26 +1519,29 @@ pub fn remove_single_byte_from_file(
         draft_path.set_file_name(draft_name);
         draft_path
     };
-
+    #[cfg(debug_assertions)]
     println!("Backup path: {}", backup_file_path.display());
+    #[cfg(debug_assertions)]
     println!("Draft path: {}", draft_file_path.display());
+    #[cfg(debug_assertions)]
     println!();
 
     // =========================================
     // Backup Creation Phase
     // =========================================
-
+    #[cfg(debug_assertions)]
     println!("Creating backup copy...");
     fs::copy(&original_file_path, &backup_file_path).map_err(|e| {
         eprintln!("ERROR: Failed to create backup: {}", e);
         e
     })?;
+    #[cfg(debug_assertions)]
     println!("Backup created successfully");
 
     // =========================================
     // Draft File Construction Phase
     // =========================================
-
+    #[cfg(debug_assertions)]
     println!(
         "Building modified draft file (removing byte at position {})...",
         byte_position_from_start
@@ -1581,6 +1639,7 @@ pub fn remove_single_byte_from_file(
 
         // EOF detection
         if bytes_read == 0 {
+            #[cfg(debug_assertions)]
             println!("Reached end of original file");
             break;
         }
@@ -1625,7 +1684,7 @@ pub fn remove_single_byte_from_file(
             // Store the byte being removed for verification
             removed_byte_value = bucket_brigade_buffer[position_in_chunk];
             byte_was_removed = true;
-
+            #[cfg(debug_assertions)]
             println!(
                 "Removing byte at position {}: 0x{:02X}",
                 byte_position_from_start, removed_byte_value
@@ -1744,7 +1803,7 @@ pub fn remove_single_byte_from_file(
     // =========================================
     // Basic Verification Phase
     // =========================================
-
+    #[cfg(debug_assertions)]
     println!("\nVerifying operation...");
 
     // Verify byte was actually removed
@@ -1788,7 +1847,7 @@ pub fn remove_single_byte_from_file(
             "File size verification failed",
         ));
     }
-
+    #[cfg(debug_assertions)]
     println!(
         "Basic verification passed: original={} bytes, draft={} bytes (-1 byte)",
         original_file_size, draft_size
@@ -1809,12 +1868,13 @@ pub fn remove_single_byte_from_file(
     // =========================================
     // Atomic Replacement Phase
     // =========================================
-
+    #[cfg(debug_assertions)]
     println!("\nReplacing original file with modified version...");
 
     // Attempt atomic rename
     match fs::rename(&draft_file_path, &original_file_path) {
         Ok(()) => {
+            #[cfg(debug_assertions)]
             println!("Original file successfully replaced");
         }
         Err(e) => {
@@ -1827,7 +1887,7 @@ pub fn remove_single_byte_from_file(
     // =========================================
     // Cleanup Phase
     // =========================================
-
+    #[cfg(debug_assertions)]
     println!("\nCleaning up backup file...");
 
     match fs::remove_file(&backup_file_path) {
@@ -1838,6 +1898,7 @@ pub fn remove_single_byte_from_file(
                 backup_file_path.display(),
                 e
             );
+            #[cfg(debug_assertions)]
             println!("Backup file retained at: {}", backup_file_path.display());
         }
     }
@@ -1845,19 +1906,28 @@ pub fn remove_single_byte_from_file(
     // =========================================
     // Operation Summary
     // =========================================
-
+    #[cfg(debug_assertions)]
     println!("\n=== Operation Complete ===");
+    #[cfg(debug_assertions)]
     println!("File: {}", original_file_path.display());
+    #[cfg(debug_assertions)]
     println!("Removed byte at position: {}", byte_position_from_start);
+    #[cfg(debug_assertions)]
     println!("Removed byte value: 0x{:02X}", removed_byte_value);
+    #[cfg(debug_assertions)]
     println!("Original size: {} bytes", original_file_size);
+    #[cfg(debug_assertions)]
     println!("New size: {} bytes", draft_size);
+    #[cfg(debug_assertions)]
     println!(
         "Bytes read from original: {}",
         total_bytes_read_from_original
     );
+    #[cfg(debug_assertions)]
     println!("Bytes written to draft: {}", total_bytes_written_to_draft);
+    #[cfg(debug_assertions)]
     println!("Total chunks: {}", chunk_number);
+    #[cfg(debug_assertions)]
     println!("Status: SUCCESS");
 
     Ok(())
@@ -1977,12 +2047,24 @@ mod removal_tests {
     }
 }
 
+/*
+Mechanical Steps of Add Byte:
+For building the draft file when adding a byte at position N:
+- Step 2: Append pre-position bytes (0 to N-1) from original to draft
+- Step 3: Append the NEW byte to draft (do NOT advance original read position)
+- Step 4: Append remaining bytes (FROM position N to EOF) from original to draft
+So the original post-target-position-step position at step 4 is still at N,
+causing the byte that WAS(is) at N in the original to now be at N+1 in draft.
+
+
+ */
+
 /// Three Tests
 fn main() -> io::Result<()> {
     // Test 1: Hex-Edit Byte In-Place
     let test_dir_1 = std::env::current_dir()?;
     let original_file_path = test_dir_1.join("pytest_file_1.py");
-    let byte_position_from_start: usize = 3;
+    let byte_position_from_start: usize = 3; // usize = 3;
     let new_byte_value: u8 = 0x61;
 
     // Run: In-Place-Edit
@@ -1993,7 +2075,7 @@ fn main() -> io::Result<()> {
     // Test 2: Remove Byte
     let test_dir_2 = std::env::current_dir()?;
     let original_file_path = test_dir_2.join("pytest_file_2.py");
-    let byte_position_from_start: usize = 3;
+    let byte_position_from_start: usize = 3; // test usize = 3;
 
     // Run: Remove
     let result_tui = remove_single_byte_from_file(original_file_path, byte_position_from_start);
