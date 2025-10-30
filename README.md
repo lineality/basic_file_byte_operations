@@ -95,6 +95,16 @@ There can also be checking steps such as:
 
 - For byte-addition only there could be an additional check: checking if the add position byte is the new byte (this is not a file comparison check).
 
+# 'Add' Target is a Position,  'Edit/Remove' Targets are Bytes
+For remove-byte and edit-byte, the target is a byte to be removed or edited.
+So we check to see if there is a byte in that position first.
+But for add-byte operation, the 'target' is not a byte, it is a position.
+By analogy, the routine procedure: if file-path does not exist yet, create the path, then go to the file at that path.
+For add-byte operation, e.g. if it is the end of a file or an empty file, we are not expecting a byte there. E.g. File: [A][B][C]
+- For remove/edit: Only positions 0, 1, 2 are valid (the actual bytes).
+- For add: Positions 0, 1, 2, **& 3** are valid (the insertion points).
+This is still a one-byte operation though, so not creating a new 'multi-step path.'
+
 # Bucket Brigade
 
 It may be possible to (in addition to more mature error/exception handling etc.) adapt this proof of concept (POC) Bucket Bridage code to:
