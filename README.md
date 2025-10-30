@@ -51,24 +51,31 @@ This file-byte operation project is an intersection of several projects and prim
 - small pre-allocated buffers only for production-release build code
 
 
-# File Identities
-At the granular level of these operations, it may be best to avoid user-abstractions such as 'add' or 'remove' or 'modify' and 'original' or 'copy'
-and to look instead at specific steps and actions.
+# File Identities & Workflow
+At the granular level of these operations, it may be best to avoid user-abstractions such as 'add' or 'remove' or 'modify' and 'original' or 'copy' when speaking of the actual mechanical steps. We should to look instead at specific well-defined steps and actions. The semantics may seem counter-intuitive, as to effect the same result we never make any changes to either the original file (preserved for safety) or to the new file, which we describe as 'altered' meaning that it is different from the original, not that 'change operations' were ever performed on the file as such. For example reconstructing a file after frameshifting does not ever literally happen (as it would need to if there were only one file without a backup).
 
-It may be possible to effect the desired end-state (retroacively described as 'add' or 'remove') with steps such as these:
+It may be possible to effect the desired end-state (retroactively described as 'add' or 'remove') with steps such as these:
+
 1. Create a draft file.
+
 2. Append bytes (from the original file, to the draft-file) up to the 'file byte position of the change operation' in question:
 append byte by byte, or append with a small bucket-brigade buffer.
+
 3. Performing Operation at 'file byte position of the change operation':
-- For Remove-a-byte-operation: 'planning action' frame shift/advance your reading of the original file one byte without writing to the draft.
+- For Remove-a-byte-operation: no action taken for draft-file, nothing written. This is an effective frame shift/advance in reading the original file one byte.
 - For Add-a-byte-operation: append the 'new' (not in original file) byte to the draft file. Do not shift original file read-location.
-4. Append bytes (from the original file, to the draft-file) up to the 'file byte position of the change operation' in question:
+- For Hex-edit: append the 'new' (not in original file) byte to the draft file.
+
+4. Performing Operation ~after 'file byte position of the change operation':
+- For hex-edit: Append bytes (from the original file, to the draft-file) after the 'file byte position of the change operation' in question:
 append byte by byte, or append with a small bucket-brigade buffer.
+- For remove-byte: Append bytes (from the original file, to the draft-file), after the 'file byte position of the change operation' in question: append byte by byte, or append with a small bucket-brigade buffer. This is similar to hex-edit, except that nothing is added AT the target position, effecting a frame-shift.
+- For Add-byte Edit: Append bytes (from the original file, to the draft-file), FROM/INCLUDING the 'file byte position of the change operation' in question: append byte by byte, or append with a small bucket-brigade buffer, effecting a frame-shift.
 
 
 In theory, this process only 'need' apply to Add-a-byte-operation and Remove-a-byte-operation not (hex-edit)change-a-byte-in-place. An in-place byte change can be done simple on a file. However, what is better:
 1. A standard process of building a new file cleanly and not making any internal changes to it and which is a single process always used, or
-2. Having two different workflows in the same tool-kit, whereby in-place edit makes a complete copy of a file and then navigates back to the change-spot and changes it and resaves the file. Is that simpler than writing the file per-design in the first place with a standard workflow?
+2. Having two different workflows in the same tool-kit, whereby in-place edit makes a complete copy of a file and then navigates back to the change-spot and changes it and resaves the file. Is that simpler than writing the file per-design in the first place with a standard workflow, especially when a backup copy would be made for safety in either case? We will assume that a more uniform workflow is more practical.
 
 Using these steps we are not 'altering' any file per-se; we are constructing the 'altered' (relatively speaking) file in one clean workflow.
 
